@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasHub | Gestão Financeira Avançada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-container" class="container d-flex align-items-center justify-content-center min-vh-100">
+        <div class="card p-4 p-md-5 auth-card">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success-light text-success rounded-circle p-3 mb-3">
+                    <i class="bi bi-wallet2 fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-1" id="auth-title">Bem-vindo ao FinançasHub</h3>
+                <p class="text-muted small" id="auth-subtitle">Acesse sua conta para gerenciar suas finanças</p>
+            </div>
+
+            <div id="auth-alert" class="alert alert-danger d-none py-2 small text-center" role="alert"></div>
+
+            <form id="auth-form">
+                <div class="mb-3 d-none" id="name-group">
+                    <label for="auth-name" class="form-label small fw-bold">Nome Completo</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control form-control-custom" id="auth-name" placeholder="Seu nome">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="auth-email" class="form-label small fw-bold">E-mail</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control form-control-custom" id="auth-email" placeholder="nome@exemplo.com" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="auth-password" class="form-label small fw-bold">Senha</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control form-control-custom" id="auth-password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold mb-3 shadow-sm" id="auth-submit-btn">Entrar</button>
+            </form>
+
+            <div class="text-center mt-2">
+                <p class="text-muted small mb-0" id="auth-toggle-text">
+                    Não tem uma conta? <a href="#" id="auth-toggle-link" class="text-success fw-bold text-decoration-none">Crie uma agora</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="app-container" class="container-fluid d-none p-0">
+        <div class="row g-0 min-vh-100">
+            
+            <aside class="col-lg-2 bg-dark text-white p-3 d-flex flex-column justify-content-between sidebar sticky-top">
+                <div>
+                    <div class="d-flex align-items-center mb-4 mt-2 justify-content-between justify-content-lg-start">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-wallet2 text-success me-2 fs-3"></i>
+                            <span class="fw-bold fs-5 text-white">Finanças<span class="text-success">Hub</span></span>
+                        </div>
+                    </div>
+                    
+                    <hr class="text-secondary d-none d-lg-block">
+
+                    <ul class="nav nav-pills flex-row flex-lg-column gap-1 mb-auto justify-content-between justify-content-lg-start w-100 overflow-x-auto text-nowrap" id="sidebar-menu">
+                        <li class="nav-item w-100">
+                            <a href="#" class="nav-link active" data-target="view-dashboard">
+                                <i class="bi bi-speedometer2 me-2"></i> <span class="d-none d-sm-inline d-lg-inline">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100">
+                            <a href="#" class="nav-link text-white-50" data-target="view-transactions">
+                                <i class="bi bi-arrow-left-right me-2"></i> <span class="d-none d-sm-inline d-lg-inline">Movimentações</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100">
+                            <a href="#" class="nav-link text-white-50" data-target="view-categories">
+                                <i class="bi bi-tags me-2"></i> <span class="d-none d-sm-inline d-lg-inline">Orçamentos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100">
+                            <a href="#" class="nav-link text-white-50" data-target="view-goals">
+                                <i class="bi bi-trophy me-2"></i> <span class="d-none d-sm-inline d-lg-inline">Metas</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="pt-3 border-top border-secondary mt-3 w-100">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="overflow-hidden me-2 d-none d-lg-block">
+                            <p class="mb-0 small text-secondary text-uppercase fw-bold" style="font-size: 0.7rem;">Usuário</p>
+                            <p class="mb-0 fw-bold text-truncate text-white" id="user-display-name">Nome</p>
+                        </div>
+                        
+                        <div class="d-flex gap-2 justify-content-between w-100 w-lg-auto justify-content-lg-end">
+                            <button class="btn btn-sm btn-outline-secondary border-0 text-white-50 p-2" id="theme-toggle-btn" title="Alternar Tema">
+                                <i class="bi bi-moon-stars fs-5" id="theme-icon"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger border-0 p-2" id="logout-btn" title="Sair da Conta">
+                                <i class="bi bi-box-arrow-right fs-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="col-lg-10 p-4 overflow-auto">
+                
+                <div id="view-dashboard" class="app-view">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Visão Geral</h4>
+                        <span class="badge bg-white text-dark shadow-sm py-2 px-3 border rounded-pill" id="current-date-badge">Junho, 2026</span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase small fw-bold">Saldo Atual</p>
+                                        <h3 class="fw-bold mb-0" id="total-balance">R$ 0,00</h3>
+                                    </div>
+                                    <div class="icon-shape bg-primary-light text-primary rounded-circle p-3"><i class="bi bi-currency-dollar fs-4"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase small fw-bold">Receitas</p>
+                                        <h3 class="fw-bold text-success mb-0" id="total-income">+ R$ 0,00</h3>
+                                    </div>
+                                    <div class="icon-shape bg-success-light text-success rounded-circle p-3"><i class="bi bi-arrow-up-circle fs-4"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase small fw-bold">Despesas</p>
+                                        <h3 class="fw-bold text-danger mb-0" id="total-expense">- R$ 0,00</h3>
+                                    </div>
+                                    <div class="icon-shape bg-danger-light text-danger rounded-circle p-3"><i class="bi bi-arrow-down-circle fs-4"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card p-4 text-center d-flex flex-column align-items-center">
+                                <h5 class="fw-bold mb-3 w-100 text-start"><i class="bi bi-pie-chart me-2 text-info"></i>Proporção Financeira</h5>
+                                <div class="chart-container w-100 m-auto" style="position: relative; height: 220px;">
+                                    <canvas id="financeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card p-4 bg-dark text-white h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <span class="badge bg-success mb-2">Análise IA</span>
+                                    <h5 class="fw-bold mb-3">Insight do Consultor</h5>
+                                    <p class="text-light-50 lh-base" id="insight-text">Seus dados estão seguros. Adicione lançamentos nas abas laterais para gerar insights automáticos.</p>
+                                </div>
+                                <div class="text-end"><i class="bi bi-lightbox fs-1 text-warning text-opacity-75"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-transactions" class="app-view d-none">
+                    <h4 class="fw-bold mb-4">Gerenciar Movimentações</h4>
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card p-4">
+                                <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>Novo Lançamento</h5>
+                                <form id="transaction-form">
+                                    <div class="mb-3">
+                                        <label for="transaction-date" class="form-label small fw-bold">Data do Lançamento</label>
+                                        <input type="date" class="form-control form-control-custom" id="transaction-date" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="amount" class="form-label small fw-bold">Valor (R$)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-custom" id="amount" placeholder="0.00" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="type" class="form-label small fw-bold">Tipo</label>
+                                        <select class="form-select form-control-custom" id="type" required>
+                                            <option value="income">Receita (+)</option>
+                                            <option value="expense">Despesa (-)</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="category-select" class="form-label small fw-bold">Categoria</label>
+                                        <select class="form-select form-control-custom" id="category-select" required></select>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">Lançar no Sistema</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card p-4 h-100">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                                    <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-2 text-secondary"></i>Histórico</h5>
+                                    
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <button class="btn btn-sm btn-outline-primary py-1 px-2.5 fw-semibold text-nowrap me-md-2" id="export-csv-btn" title="Exportar dados filtrados para Excel">
+                                            <i class="bi bi-filetype-csv me-1"></i> Exportar CSV
+                                        </button>
+
+                                        <input type="month" id="filter-period" class="form-control form-control-custom py-1 px-2 small" style="max-width: 140px;">
+                                        
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <input type="radio" class="btn-check" name="filter-type" id="filter-all" value="all" checked>
+                                            <label class="btn btn-outline-secondary" for="filter-all">Todos</label>
+
+                                            <input type="radio" class="btn-check" name="filter-type" id="filter-income" value="income">
+                                            <label class="btn btn-outline-success" for="filter-income">Receitas</label>
+
+                                            <input type="radio" class="btn-check" name="filter-type" id="filter-expense" value="expense">
+                                            <label class="btn btn-outline-danger" for="filter-expense">Despesas</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Categoria</th>
+                                                <th>Valor</th>
+                                                <th class="text-end"><button class="btn btn-sm btn-link text-danger border-0 p-0" id="clear-all" title="Limpar tudo"><i class="bi bi-trash3"></i></button></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transaction-list"></tbody>
+                                    </table>
+                                </div>
+                                <div id="no-transactions" class="text-center py-5 text-muted d-none">
+                                    <i class="bi bi-filter-square fs-2 mb-2 d-block"></i> Nenhum registro encontrado para este filtro.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-categories" class="app-view d-none">
+                    <h4 class="fw-bold mb-4">Configurar Orçamentos por Categoria</h4>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card p-4">
+                                <h5 class="fw-bold mb-3"><i class="bi bi-tag me-2 text-primary"></i>Nova Categoria / Limite</h5>
+                                <form id="category-form">
+                                    <div class="mb-3">
+                                        <label for="category-name" class="form-label small fw-bold">Nome da Categoria</label>
+                                        <input type="text" class="form-control form-control-custom" id="category-name" placeholder="Ex: Saúde, Alimentação" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="category-budget" class="form-label small fw-bold">Teto Mensal de Gastos (R$)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-custom" id="category-budget" placeholder="0.00 (Opcional)">
+                                        <div class="form-text text-muted small" style="font-size: 0.75rem;">Deixe vazio ou use 0 para não definir um limite de gastos.</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Salvar Configuração</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card p-4 h-100">
+                                <h5 class="fw-bold mb-3"><i class="bi bi-sliders me-2 text-secondary"></i>Acompanhamento Mensal de Tetos</h5>
+                                <div id="categories-container" class="d-flex flex-column gap-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-goals" class="app-view d-none">
+                    <h4 class="fw-bold mb-4">Metas de Poupança</h4>
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="card p-4">
+                                <h5 class="fw-bold mb-3"><i class="bi bi-target me-2 text-warning"></i>Definir Nova Meta</h5>
+                                <form id="goal-form">
+                                    <div class="mb-3">
+                                        <label for="goal-title" class="form-label small fw-bold">Objetivo / Nome</label>
+                                        <input type="text" class="form-control form-control-custom" id="goal-title" placeholder="Ex: Viagem de Férias, Reserva" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="goal-target" class="form-label small fw-bold">Valor Alvo (R$)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-custom" id="goal-target" placeholder="5000.00" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning text-dark w-100 py-2 fw-bold">Estabelecer Meta</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="card p-4 h-100">
+                                <h5 class="fw-bold mb-3">Progresso Atual das Metas</h5>
+                                <div id="goals-container" class="d-flex flex-column gap-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

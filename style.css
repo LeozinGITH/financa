@@ -1,0 +1,134 @@
+/* ==========================================
+   DEFINIÇÃO DE VARIÁVEIS E TEMAS
+   ========================================== */
+:root {
+    --bg-main: #f4f7f6;
+    --bg-card: #ffffff;
+    --bg-table-header: #f8f9fa;
+    --text-main: #2d3748;
+    --text-muted: #6c757d;
+    --border-color: #e2e8f0;
+    --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Paleta de Cores para o Modo Escuro */
+[data-theme="dark"] {
+    --bg-main: #0f172a; /* Azul escuro/cinza ardósia */
+    --bg-card: #1e293b; /* Card um pouco mais claro */
+    --bg-table-header: #334155;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================
+   ESTILOS GERAIS E TRANSIÇÕES
+   ========================================== */
+body {
+    background-color: var(--bg-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Transição suave para elementos que mudam de cor */
+.card, .form-control-custom, .form-select, table, td, th, .list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.table-light {
+    background-color: var(--bg-table-header) !important;
+}
+
+/* Configuração do Sidebar Responsivo */
+@media (min-width: 992px) {
+    .sidebar {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        height: auto;
+        padding: 0.75rem !important;
+        flex-direction: row !important;
+        align-items: center;
+    }
+    .sidebar ul.nav {
+        width: auto !important;
+    }
+    .sidebar .nav-link {
+        padding: 0.5rem 0.8rem;
+    }
+}
+
+.sidebar .nav-link {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link.active {
+    background-color: #198754 !important;
+    color: #fff !important;
+}
+
+.sidebar .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+}
+
+/* Telas e Autenticação */
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    border-radius: 24px;
+}
+
+.card {
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+}
+
+/* Badges e Cores de Destaque Estáveis */
+.bg-primary-light { background-color: rgba(13, 110, 253, 0.15) !important; }
+.bg-success-light { background-color: rgba(25, 135, 84, 0.15) !important; }
+.bg-danger-light { background-color: rgba(220, 53, 69, 0.15) !important; }
+
+.text-muted { color: var(--text-muted) !important; }
+
+.icon-shape {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+}
+
+.form-control-custom, .form-select {
+    border-radius: 12px;
+    padding: 0.65rem 0.8rem;
+}
+
+.form-control-custom:focus, .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25) !important;
+    border-color: #198754 !important;
+}
+
+.text-light-50 { color: rgba(255, 255, 255, 0.75); }
+
+/* Animação de Fade-In para as Abas do SPA */
+.app-view {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
