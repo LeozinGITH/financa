@@ -319,11 +319,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Configuração do seu app Firebase (Substitua pelos SEUS dados do Passo 1)
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Configurações exatas do seu banco de dados
         const firebaseConfig = {
             apiKey: "AIzaSyDOC7oeuBNhAfXW-SCLCwJRFx0NZheF2S4",
             authDomain: "financashub-eaca6.firebaseapp.com",
@@ -334,16 +335,20 @@
             appId: "1:1088876971631:web:5dc1d8e87944a8701a6f9a"
         };
 
-        // Inicializa o Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        // Inicializando de forma global estável
+        firebase.initializeApp(firebaseConfig);
 
-        // Disponibiliza as instâncias globalmente para o script.js usar
-        window.fbDB = db;
-        window.fbRef = ref;
-        window.fbSet = set;
-        window.fbOnValue = onValue;
+        const databaseInstance = firebase.database();
+        
+        // Força o desvio de segurança de rede contra falhas em conexões WebSocket (wss://)
+        if (databaseInstance && databaseInstance.repo_ && databaseInstance.repo_.repoInfo_) {
+            databaseInstance.repo_.repoInfo_.webSocketOnly = false;
+        }
+
+        // Injeta a instância na janela global de forma limpa para o seu script.js tradicional consumir
+        window.fbDB = databaseInstance;
     </script>
-    <script type="module" src="script.js"></script>
+
+    <script src="script.js"></script>
 </body>
 </html>
