@@ -41,6 +41,7 @@ const userDisplayName = document.getElementById('user-display-name');
 
 let authMode = 'login';
 let currentUser = null;
+let emailSanitizado = ""; // Chave segura de roteamento no banco de dados
 
 // Formulários e Listas
 const categoryForm = document.getElementById('category-form');
@@ -97,25 +98,48 @@ authToggleLink.addEventListener('click', (e) => {
     }
 });
 
+// FORMULÁRIO DE AUTENTICAÇÃO UNIFICADO NA NUVEM
 authForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = authEmailInput.value.trim().toLowerCase();
     const password = authPasswordInput.value;
-    let users = JSON.parse(localStorage.getItem('fh_users')) || [];
+    
+    // Cria uma chave limpa para o e-mail (removendo pontos, etc) para buscar no Firebase
+    const emailChave = email.replace(/[.#$\[\]]/g, "_");
 
     if (authMode === 'register') {
-        if (users.some(u => u.email === email)) {
-            showAuthAlert('Este e-mail já existe.');
-            return;
-        }
-        users.push({ name: authNameInput.value.trim(), email, password });
-        localStorage.setItem('fh_users', JSON.stringify(users));
-        alert('Conta criada! Faça login.');
-        location.reload();
+        // 1. CADASTRO: Verifica diretamente na nuvem se o usuário já existe
+        window.fbDB.ref(`auth_users/${emailChave}`).once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                showAuthAlert('Este e-mail já existe.');
+                return;
+            }
+            
+            // Se não existe, salva o novo usuário globalmente no Firebase
+            const novoUsuario = { name: authNameInput.value.trim(), email, password };
+            
+            window.fbDB.ref(`auth_users/${emailChave}`).set(novoUsuario, (error) => {
+                if (error) {
+                    showAuthAlert('Erro ao criar conta na nuvem.');
+                } else {
+                    alert('Conta criada! Faça login.');
+                    location.reload();
+                }
+            });
+        });
     } else {
-        const user = users.find(u => u.email === email && u.password === password);
-        if (!user) { showAuthAlert('E-mail ou senha incorretos.'); return; }
-        login(user);
+        // 2. LOGIN: Busca as credenciais diretamente do Firebase (Funciona em qualquer PC ou Celular)
+        window.fbDB.ref(`auth_users/${emailChave}`).once('value', (snapshot) => {
+            const user = snapshot.val();
+            
+            if (!user || user.password !== password) { 
+                showAuthAlert('E-mail ou senha incorretos.'); 
+                return; 
+            }
+            
+            // Login efetuado com sucesso usando os dados sincronizados da nuvem
+            login(user);
+        });
     }
 });
 
@@ -124,10 +148,15 @@ function showAuthAlert(msg) {
     authAlert.classList.remove('d-none');
 }
 
+// LÓGICA DE LOGIN COM INICIALIZAÇÃO DE REFERÊNCIA GLOBAL
 function login(user) {
     currentUser = user;
     sessionStorage.setItem('fh_logged_user', JSON.stringify(user));
     userDisplayName.innerText = user.name;
+    
+    // Substitui caracteres especiais proibidos pelo Firebase nas referências de nós
+    emailSanitizado = user.email.replace(/[.#$\[\]]/g, "_");
+    
     authContainer.classList.add('d-none');
     appContainer.classList.remove('d-none');
     
@@ -145,32 +174,47 @@ function logout() {
 // OPERAÇÃO DOS DADOS DO USUÁRIO LOGADO
 // ==========================================
 function loadUserData() {
-    const email = currentUser.email;
-    transactions = JSON.parse(localStorage.getItem(`tx_${email}`)) || [];
-    
-    const savedCats = JSON.parse(localStorage.getItem(`cat_${email}`));
-    if (savedCats && savedCats.length > 0 && typeof savedCats[0] === 'object') {
-        categories = savedCats;
-    } else {
-        categories = [
-            { name: 'Salário', budget: 0 },
-            { name: 'Alimentação', budget: 600 },
-            { name: 'Moradia', budget: 1200 },
-            { name: 'Lazer', budget: 300 }
-        ];
-    }
-
-    goals = JSON.parse(localStorage.getItem(`goals_${email}`)) || [];
-
     const hoje = new Date().toISOString().split('T')[0];
     dateInput.value = hoje;
     filterPeriod.value = hoje.substring(0, 7);
 
     initChart();
-    renderCategories();
-    renderGoals();
-    renderTransactions();
-    updateValues();
+
+    // 1. Escuta Realtime de Transações
+    window.fbDB.ref(`users/${emailSanitizado}/transactions`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        transactions = data ? Object.values(data) : [];
+        renderTransactions();
+        updateValues();
+        renderCategories();
+        renderGoals();
+    });
+
+    // 2. Escuta Realtime de Categorias e Orçamentos
+    window.fbDB.ref(`users/${emailSanitizado}/categories`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            categories = Object.values(data);
+        } else {
+            // Inicializa estrutura padrão na nuvem se o nó não existir
+            categories = [
+                { name: 'Salário', budget: 0 },
+                { name: 'Alimentação', budget: 600 },
+                { name: 'Moradia', budget: 1200 },
+                { name: 'Lazer', budget: 300 }
+            ];
+            window.fbDB.ref(`users/${emailSanitizado}/categories`).set(categories);
+        }
+        renderCategories();
+        renderTransactions();
+    });
+
+    // 3. Escuta Realtime de Metas de Poupança
+    window.fbDB.ref(`users/${emailSanitizado}/goals`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        goals = data ? Object.values(data) : [];
+        renderGoals();
+    });
 }
 
 // --- CATEGORIAS & BUDGETING ---
@@ -187,12 +231,11 @@ categoryForm.addEventListener('submit', (e) => {
         categories.push({ name, budget: budgetVal });
     }
     
-    localStorage.setItem(`cat_${currentUser.email}`, JSON.stringify(categories));
+    // Atualização atômica na infraestrutura de dados cloud do Firebase
+    window.fbDB.ref(`users/${emailSanitizado}/categories`).set(categories);
+    
     categoryNameInput.value = '';
     categoryBudgetInput.value = '';
-    
-    renderCategories();
-    renderTransactions();
 });
 
 function renderCategories() {
@@ -254,8 +297,7 @@ function renderCategories() {
 window.removeCategory = function(index) {
     if(confirm("Remover esta categoria do painel de orçamentos?")) {
         categories.splice(index, 1);
-        localStorage.setItem(`cat_${currentUser.email}`, JSON.stringify(categories));
-        renderCategories();
+        window.fbDB.ref(`users/${emailSanitizado}/categories`).set(categories);
     }
 };
 
@@ -270,16 +312,13 @@ transactionForm.addEventListener('submit', (e) => {
         category: categorySelect.value
     };
     transactions.push(tx);
-    localStorage.setItem(`tx_${currentUser.email}`, JSON.stringify(transactions));
+    
+    // Envia o novo registro diretamente para a nuvem sincronizada
+    window.fbDB.ref(`users/${emailSanitizado}/transactions`).set(transactions);
     
     const tempDate = dateInput.value;
     transactionForm.reset();
     dateInput.value = tempDate;
-
-    renderTransactions();
-    updateValues();
-    renderGoals();
-    renderCategories();
 });
 
 function formatDateToBRL(dateString) {
@@ -294,7 +333,7 @@ filterPeriod.addEventListener('input', () => {
 });
 filterTypeRadios.forEach(radio => radio.addEventListener('change', renderTransactions));
 
-// Obtém a lista atualmente filtrada com base no estado dos seletores da UI
+// Obtem a lista atualmente filtrada com base no estado dos seletores da UI
 function getFilteredTransactions() {
     const selectedPeriod = filterPeriod.value;
     let selectedType = 'all';
@@ -337,8 +376,7 @@ function renderTransactions() {
     });
 }
 
-// Lógica de Geração e Download de CSV
-// Lógica de Geração de Relatório Personalizado e Estilizado para Excel
+// Logica de Geracao de Relatorio Personalizado e Estilizado para Excel
 exportCsvBtn.addEventListener('click', () => {
     const dataToExport = getFilteredTransactions();
 
@@ -347,12 +385,9 @@ exportCsvBtn.addEventListener('click', () => {
         return;
     }
 
-    // Ordena por ordem cronológica
     dataToExport.sort((a, b) => new Date(a.date) - new Date(b.date));
-
     const periodoNome = filterPeriod.value || 'Geral';
     
-    // Criamos a estrutura HTML/CSS que o Excel interpreta nativamente ao abrir como .xls
     let excelTemplate = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
@@ -416,7 +451,6 @@ exportCsvBtn.addEventListener('click', () => {
     const saldoFinal = totalReceitas - totalDespesas;
     const classeSaldo = saldoFinal >= 0 ? 'income-val' : 'expense-val';
 
-    // Adiciona linhas de resumo estilizadas no rodapé da tabela
     excelTemplate += `
                 <tr></tr>
                 <tr class="total-row">
@@ -437,7 +471,6 @@ exportCsvBtn.addEventListener('click', () => {
     </html>
     `;
 
-    // Cria o Blob simulando um arquivo do Excel nativo
     const blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const link = document.createElement("a");
     
@@ -452,21 +485,13 @@ exportCsvBtn.addEventListener('click', () => {
 
 window.removeTransaction = function(id) {
     transactions = transactions.filter(t => t.id !== id);
-    localStorage.setItem(`tx_${currentUser.email}`, JSON.stringify(transactions));
-    renderTransactions();
-    updateValues();
-    renderGoals();
-    renderCategories();
+    window.fbDB.ref(`users/${emailSanitizado}/transactions`).set(transactions);
 };
 
 clearAllBtn.addEventListener('click', () => {
     if(confirm("Deseja apagar o histórico completo de lançamentos?")) {
         transactions = [];
-        localStorage.removeItem(`tx_${currentUser.email}`);
-        renderTransactions();
-        updateValues();
-        renderGoals();
-        renderCategories();
+        window.fbDB.ref(`users/${emailSanitizado}/transactions`).set(null);
     }
 });
 
@@ -479,9 +504,9 @@ goalForm.addEventListener('submit', (e) => {
         target: parseFloat(goalTargetInput.value)
     };
     goals.push(goal);
-    localStorage.setItem(`goals_${currentUser.email}`, JSON.stringify(goals));
+    
+    window.fbDB.ref(`users/${emailSanitizado}/goals`).set(goals);
     goalForm.reset();
-    renderGoals();
 });
 
 function renderGoals() {
@@ -602,7 +627,15 @@ window.addEventListener('DOMContentLoaded', () => {
     applyTheme(savedTheme);
 
     const loggedUser = sessionStorage.getItem('fh_logged_user');
-    if (loggedUser) login(JSON.parse(loggedUser));
+    
+    if (loggedUser) {
+        // Mini delay controlado de 100ms para aguardar de forma assíncrona a inicialização do window.fbDB
+        setTimeout(() => {
+            if (window.fbDB) {
+                login(JSON.parse(loggedUser));
+            }
+        }, 100);
+    }
     
     const date = new Date();
     document.getElementById('current-date-badge').innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
