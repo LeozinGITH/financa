@@ -145,68 +145,32 @@ function logout() {
 // OPERAÇÃO DOS DADOS DO USUÁRIO LOGADO
 // ==========================================
 function loadUserData() {
-    // No evento de submit do categoryForm, substitua a linha do localStorage por:
-    const emailSanitizado = currentUser.email.replace(/[.#$\[\]]/g, "_");
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/categories`), categories);
-
-    // Na função window.removeCategory, substitua a linha por:
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/categories`), categories);
-
-    // No evento de submit do transactionForm, substitua a inserção por:
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`), transactions);
-
-    // Na função window.removeTransaction, substitua por:
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`), transactions);
-
-    // No botão de limpar tudo (clearAllBtn), substitua por:
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`), null);
-
-    // No evento de submit do goalForm, substitua por:
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/goals`), goals);
+    const email = currentUser.email;
+    transactions = JSON.parse(localStorage.getItem(`tx_${email}`)) || [];
     
+    const savedCats = JSON.parse(localStorage.getItem(`cat_${email}`));
+    if (savedCats && savedCats.length > 0 && typeof savedCats[0] === 'object') {
+        categories = savedCats;
+    } else {
+        categories = [
+            { name: 'Salário', budget: 0 },
+            { name: 'Alimentação', budget: 600 },
+            { name: 'Moradia', budget: 1200 },
+            { name: 'Lazer', budget: 300 }
+        ];
+    }
+
+    goals = JSON.parse(localStorage.getItem(`goals_${email}`)) || [];
+
     const hoje = new Date().toISOString().split('T')[0];
     dateInput.value = hoje;
     filterPeriod.value = hoje.substring(0, 7);
+
     initChart();
-
-    // 1. Escutar Transações em Tempo Real
-    const txRef = window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`);
-    window.fbOnValue(txRef, (snapshot) => {
-        const data = snapshot.val();
-        transactions = data ? Object.values(data) : [];
-        renderTransactions();
-        updateValues();
-        renderGoals();
-        renderCategories(); // Atualiza os medidores automaticamente ao receber dados
-    });
-
-    // 2. Escutar Categorias/Orçamentos em Tempo Real
-    const catRef = window.fbRef(window.fbDB, `users/${emailSanitizado}/categories`);
-    window.fbOnValue(catRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            categories = Object.values(data);
-        } else {
-            // Inicialização padrão caso o banco esteja vazio para este usuário
-            categories = [
-                { name: 'Salário', budget: 0 },
-                { name: 'Alimentação', budget: 600 },
-                { name: 'Moradia', budget: 1200 },
-                { name: 'Lazer', budget: 300 }
-            ];
-            // Salva o padrão inicial no banco
-            window.fbSet(catRef, categories);
-        }
-        renderCategories();
-    });
-
-    // 3. Escutar Metas em Tempo Real
-    const goalsRef = window.fbRef(window.fbDB, `users/${emailSanitizado}/goals`);
-    window.fbOnValue(goalsRef, (snapshot) => {
-        const data = snapshot.val();
-        goals = data ? Object.values(data) : [];
-        renderGoals();
-    });
+    renderCategories();
+    renderGoals();
+    renderTransactions();
+    updateValues();
 }
 
 // --- CATEGORIAS & BUDGETING ---
@@ -373,6 +337,7 @@ function renderTransactions() {
     });
 }
 
+// Lógica de Geração e Download de CSV
 // Lógica de Geração de Relatório Personalizado e Estilizado para Excel
 exportCsvBtn.addEventListener('click', () => {
     const dataToExport = getFilteredTransactions();
@@ -636,14 +601,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('fh_theme') || 'light';
     applyTheme(savedTheme);
 
+    const loggedUser = sessionStorage.getItem('fh_logged_user');
+    if (loggedUser) login(JSON.parse(loggedUser));
+    
     const date = new Date();
     document.getElementById('current-date-badge').innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-    // Dá um tempo de 250ms para o Firebase conectar antes de tentar puxar os dados
-    setTimeout(() => {
-        const loggedUser = sessionStorage.getItem('fh_logged_user');
-        if (loggedUser && window.fbDB) {
-            login(JSON.parse(loggedUser));
-        }
-    }, 250);
 });
