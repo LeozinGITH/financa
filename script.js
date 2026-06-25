@@ -312,7 +312,7 @@ transactionForm.addEventListener('submit', (e) => {
         category: categorySelect.value
     };
     transactions.push(tx);
-    localStorage.setItem(`tx_${currentUser.email}`, JSON.stringify(transactions));
+    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`), transactions);
     
     const tempDate = dateInput.value;
     transactionForm.reset();
