@@ -124,16 +124,10 @@ function showAuthAlert(msg) {
     authAlert.classList.remove('d-none');
 }
 
-let emailSanitizado = ""; // Crie esta variável global no topo do script.js
-
 function login(user) {
     currentUser = user;
     sessionStorage.setItem('fh_logged_user', JSON.stringify(user));
     userDisplayName.innerText = user.name;
-    
-    // Sanitiza o e-mail globalmente aqui (substitui pontos por underscores)
-    emailSanitizado = user.email.replace(/[.#$\[\]]/g, "_");
-    
     authContainer.classList.add('d-none');
     appContainer.classList.remove('d-none');
     
@@ -312,7 +306,7 @@ transactionForm.addEventListener('submit', (e) => {
         category: categorySelect.value
     };
     transactions.push(tx);
-    window.fbSet(window.fbRef(window.fbDB, `users/${emailSanitizado}/transactions`), transactions);
+    localStorage.setItem(`tx_${currentUser.email}`, JSON.stringify(transactions));
     
     const tempDate = dateInput.value;
     transactionForm.reset();
@@ -642,9 +636,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('fh_theme') || 'light';
     applyTheme(savedTheme);
 
-    const loggedUser = sessionStorage.getItem('fh_logged_user');
-    if (loggedUser) login(JSON.parse(loggedUser));
-    
     const date = new Date();
     document.getElementById('current-date-badge').innerText = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    // Dá um tempo de 250ms para o Firebase conectar antes de tentar puxar os dados
+    setTimeout(() => {
+        const loggedUser = sessionStorage.getItem('fh_logged_user');
+        if (loggedUser && window.fbDB) {
+            login(JSON.parse(loggedUser));
+        }
+    }, 250);
 });
