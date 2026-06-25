@@ -124,10 +124,16 @@ function showAuthAlert(msg) {
     authAlert.classList.remove('d-none');
 }
 
+let emailSanitizado = ""; // Crie esta variável global no topo do script.js
+
 function login(user) {
     currentUser = user;
     sessionStorage.setItem('fh_logged_user', JSON.stringify(user));
     userDisplayName.innerText = user.name;
+    
+    // Sanitiza o e-mail globalmente aqui (substitui pontos por underscores)
+    emailSanitizado = user.email.replace(/[.#$\[\]]/g, "_");
+    
     authContainer.classList.add('d-none');
     appContainer.classList.remove('d-none');
     
